@@ -39,3 +39,37 @@ CountResponse _$CountResponseFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$CountResponseToJson(CountResponse instance) =>
     <String, dynamic>{'count': instance.count};
+
+CreateUserRequest _$CreateUserRequestFromJson(Map<String, dynamic> json) =>
+    CreateUserRequest(
+      OurClient.fromJson(json['clientData'] as Map<String, dynamic>),
+    );
+
+Map<String, dynamic> _$CreateUserRequestToJson(CreateUserRequest instance) =>
+    <String, dynamic>{'clientData': instance.clientData};
+
+CreateUserResponse _$CreateUserResponseFromJson(Map<String, dynamic> json) =>
+    CreateUserResponse();
+
+Map<String, dynamic> _$CreateUserResponseToJson(CreateUserResponse instance) =>
+    <String, dynamic>{};
+
+OurClient _$OurClientFromJson(Map<String, dynamic> json) => OurClient(
+  password: json['password'] as String,
+  name: json['name'] as String,
+  login: json['login'] as String,
+  birthday: json['birthday'] as String,
+  email: json['email'] as String,
+  phone: json['phone'] as String,
+  innEnterprise: json['innEnterprise'] as String,
+);
+
+Map<String, dynamic> _$OurClientToJson(OurClient instance) => <String, dynamic>{
+  'password': instance.password,
+  'name': instance.name,
+  'login': instance.login,
+  'birthday': instance.birthday,
+  'email': instance.email,
+  'phone': instance.phone,
+  'innEnterprise': instance.innEnterprise,
+};

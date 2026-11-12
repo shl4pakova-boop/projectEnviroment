@@ -1010,9 +1010,9 @@ class $ClientTable extends Client with TableInfo<$ClientTable, ClientData> {
   late final GeneratedColumn<String> innEnterprise = GeneratedColumn<String>(
     'inn_enterprise',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES enterprise (inn) ON DELETE CASCADE',
     ),
@@ -1095,8 +1095,6 @@ class $ClientTable extends Client with TableInfo<$ClientTable, ClientData> {
           _innEnterpriseMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_innEnterpriseMeta);
     }
     return context;
   }
@@ -1134,7 +1132,7 @@ class $ClientTable extends Client with TableInfo<$ClientTable, ClientData> {
       innEnterprise: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}inn_enterprise'],
-      )!,
+      ),
     );
   }
 
@@ -1151,7 +1149,7 @@ class ClientData extends DataClass implements Insertable<ClientData> {
   final String birthday;
   final String email;
   final String phone;
-  final String innEnterprise;
+  final String? innEnterprise;
   const ClientData({
     required this.password,
     required this.name,
@@ -1159,7 +1157,7 @@ class ClientData extends DataClass implements Insertable<ClientData> {
     required this.birthday,
     required this.email,
     required this.phone,
-    required this.innEnterprise,
+    this.innEnterprise,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1170,7 +1168,9 @@ class ClientData extends DataClass implements Insertable<ClientData> {
     map['birthday'] = Variable<String>(birthday);
     map['email'] = Variable<String>(email);
     map['phone'] = Variable<String>(phone);
-    map['inn_enterprise'] = Variable<String>(innEnterprise);
+    if (!nullToAbsent || innEnterprise != null) {
+      map['inn_enterprise'] = Variable<String>(innEnterprise);
+    }
     return map;
   }
 
@@ -1182,7 +1182,9 @@ class ClientData extends DataClass implements Insertable<ClientData> {
       birthday: Value(birthday),
       email: Value(email),
       phone: Value(phone),
-      innEnterprise: Value(innEnterprise),
+      innEnterprise: innEnterprise == null && nullToAbsent
+          ? const Value.absent()
+          : Value(innEnterprise),
     );
   }
 
@@ -1198,7 +1200,7 @@ class ClientData extends DataClass implements Insertable<ClientData> {
       birthday: serializer.fromJson<String>(json['birthday']),
       email: serializer.fromJson<String>(json['email']),
       phone: serializer.fromJson<String>(json['phone']),
-      innEnterprise: serializer.fromJson<String>(json['innEnterprise']),
+      innEnterprise: serializer.fromJson<String?>(json['innEnterprise']),
     );
   }
   @override
@@ -1211,7 +1213,7 @@ class ClientData extends DataClass implements Insertable<ClientData> {
       'birthday': serializer.toJson<String>(birthday),
       'email': serializer.toJson<String>(email),
       'phone': serializer.toJson<String>(phone),
-      'innEnterprise': serializer.toJson<String>(innEnterprise),
+      'innEnterprise': serializer.toJson<String?>(innEnterprise),
     };
   }
 
@@ -1222,7 +1224,7 @@ class ClientData extends DataClass implements Insertable<ClientData> {
     String? birthday,
     String? email,
     String? phone,
-    String? innEnterprise,
+    Value<String?> innEnterprise = const Value.absent(),
   }) => ClientData(
     password: password ?? this.password,
     name: name ?? this.name,
@@ -1230,7 +1232,9 @@ class ClientData extends DataClass implements Insertable<ClientData> {
     birthday: birthday ?? this.birthday,
     email: email ?? this.email,
     phone: phone ?? this.phone,
-    innEnterprise: innEnterprise ?? this.innEnterprise,
+    innEnterprise: innEnterprise.present
+        ? innEnterprise.value
+        : this.innEnterprise,
   );
   ClientData copyWithCompanion(ClientCompanion data) {
     return ClientData(
@@ -1283,7 +1287,7 @@ class ClientCompanion extends UpdateCompanion<ClientData> {
   final Value<String> birthday;
   final Value<String> email;
   final Value<String> phone;
-  final Value<String> innEnterprise;
+  final Value<String?> innEnterprise;
   final Value<int> rowid;
   const ClientCompanion({
     this.password = const Value.absent(),
@@ -1302,15 +1306,14 @@ class ClientCompanion extends UpdateCompanion<ClientData> {
     required String birthday,
     required String email,
     required String phone,
-    required String innEnterprise,
+    this.innEnterprise = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : password = Value(password),
        name = Value(name),
        login = Value(login),
        birthday = Value(birthday),
        email = Value(email),
-       phone = Value(phone),
-       innEnterprise = Value(innEnterprise);
+       phone = Value(phone);
   static Insertable<ClientData> custom({
     Expression<String>? password,
     Expression<String>? name,
@@ -1340,7 +1343,7 @@ class ClientCompanion extends UpdateCompanion<ClientData> {
     Value<String>? birthday,
     Value<String>? email,
     Value<String>? phone,
-    Value<String>? innEnterprise,
+    Value<String?>? innEnterprise,
     Value<int>? rowid,
   }) {
     return ClientCompanion(
@@ -3434,7 +3437,7 @@ typedef $$ClientTableCreateCompanionBuilder = ClientCompanion Function({
   required String birthday,
   required String email,
   required String phone,
-  required String innEnterprise,
+  Value<String?> innEnterprise,
   Value<int> rowid,
 });
 typedef $$ClientTableUpdateCompanionBuilder = ClientCompanion Function({
@@ -3444,7 +3447,7 @@ typedef $$ClientTableUpdateCompanionBuilder = ClientCompanion Function({
   Value<String> birthday,
   Value<String> email,
   Value<String> phone,
-  Value<String> innEnterprise,
+  Value<String?> innEnterprise,
   Value<int> rowid,
 });
 
@@ -3455,9 +3458,9 @@ final class $$ClientTableReferences
   static $EnterpriseTable _innEnterpriseTable(_$AppDatabase db) =>
       db.enterprise.createAlias('client__inn_enterprise__enterprise__inn');
 
-  $$EnterpriseTableProcessedTableManager get innEnterprise {
-    final $_column = $_itemColumn<String>('inn_enterprise')!;
-
+  $$EnterpriseTableProcessedTableManager? get innEnterprise {
+    final $_column = $_itemColumn<String>('inn_enterprise');
+    if ($_column == null) return null;
     final manager = $$EnterpriseTableTableManager(
       $_db,
       $_db.enterprise,
@@ -3749,7 +3752,7 @@ class $$ClientTableTableManager
                 Value<String> birthday = const Value.absent(),
                 Value<String> email = const Value.absent(),
                 Value<String> phone = const Value.absent(),
-                Value<String> innEnterprise = const Value.absent(),
+                Value<String?> innEnterprise = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ClientCompanion(
                 password: password,
@@ -3769,7 +3772,7 @@ class $$ClientTableTableManager
                 required String birthday,
                 required String email,
                 required String phone,
-                required String innEnterprise,
+                Value<String?> innEnterprise = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ClientCompanion.insert(
                 password: password,

@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:shared/bd.dart';
 part 'shared.g.dart';
 
 @JsonSerializable()
@@ -34,4 +35,41 @@ class const CountResponse({required final int count}) {
   factory CountResponse.fromJson(Map<String, dynamic> json) =>
       _$CountResponseFromJson(json);
   Map<String, dynamic> toJson() => _$CountResponseToJson(this);
+}
+
+@JsonSerializable()
+class const CreateUserRequest(final OurClient clientData) {
+  factory CreateUserRequest.fromJson(Map<String, dynamic> json) =>
+      _$CreateUserRequestFromJson(json);
+  Map<String, dynamic> toJson() => _$CreateUserRequestToJson(this);
+}
+
+@JsonSerializable()
+class const CreateUserResponse() {
+  factory CreateUserResponse.fromJson(Map<String, dynamic> json) =>
+      _$CreateUserResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$CreateUserResponseToJson(this);
+}
+
+@JsonSerializable()
+class OurClient {
+  String password;
+  String name;
+  String login;
+  String birthday;
+  String email;
+  String phone;
+  String innEnterprise;
+  OurClient({
+    required this.password,
+    required this.name,
+    required this.login,
+    required this.birthday,
+    required this.email,
+    required this.phone,
+    required this.innEnterprise,
+  });
+  factory OurClient.fromJson(Map<String, dynamic> json) =>
+      _$OurClientFromJson(json);
+  Map<String, dynamic> toJson() => _$OurClientToJson(this);
 }

@@ -1,6 +1,6 @@
 import 'dart:developer';
 
-import 'package:server/bd.dart';
+import 'package:shared/bd.dart';
 import 'package:shared/shared.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
@@ -11,7 +11,7 @@ import 'dart:convert';
 void main() async {
   try {
     final database = AppDatabase();
-    database.insertClient(); // Initialize your database here
+    database.insertData(); // Initialize your database here
     database.insertLaborant();
 
     var router = Router();
@@ -53,9 +53,22 @@ void main() async {
         headers: {'Content-Type': 'application/json'},
       );
     });
+    router.post('/client', (Request request) async {
+        var body = await request.readAsString();
+        final createUserReguest = CreateUserRequest.fromJson(jsonDecode(body));
+        log('${createUserReguest.clientData.email} ${createUserReguest.clientData.innEnterprise}');
+         database.insertNewClient(
+        createUserReguest.clientData,
+
+      );
+
+      return Response.ok(jsonEncode(CreateUserResponse().toJson()),
+      headers: {'Content-Type': 'application/json'},
+      );  
+    });
     router.get('/count', (Request request) async {
-      var body = await request.readAsString();
-      final _ = CountRequest.fromJson(jsonDecode(body));
+  
+  
       final otvet = await database.countOrder();
       log("$otvet");
       return Response.ok(
@@ -70,5 +83,6 @@ void main() async {
     final _ = await io.serve(app, 'localhost', 8080);
   } catch (e) {
     log(e.toString());
+    
   }
 }

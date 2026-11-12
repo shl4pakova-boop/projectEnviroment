@@ -178,11 +178,21 @@ Future<void> pageAddClient(BuildContext context) async {
     builder: (context) => const ClientDialog(),
   );
   if (result == null) return;
-  if (result is ClientData) {
-    // отправить запрос о создании клиента на сервер
-  }
+  if (result is OurClient) {
+  try {
+     final dio = Dio();
+                  final response = await dio.post(
+                    'http://localhost:8080/client',
+                    data: jsonEncode(
+                      CreateUserRequest(
+                         result
+                      ).toJson(),
+                    ),
+                  );
+                  final createUserResponse = CreateUserResponse.fromJson(response.data);
+  } catch (e){}
 }
-
+}
 class ClientDialog extends StatefulWidget {
   const new({super.key});
 
@@ -191,7 +201,7 @@ class ClientDialog extends StatefulWidget {
 }
 
 class _ClientDialogState extends State<ClientDialog> {
-  var client = ClientData(
+  var client = OurClient(
     password: '',
     name: '',
     login: '',
@@ -212,12 +222,12 @@ class _ClientDialogState extends State<ClientDialog> {
           children: [
             TextField(
               decoration: InputDecoration(labelText: 'ФИО'),
-              onChanged: (value) => client = client.copyWith(name: value),
+              onChanged: (value) => client.name= value,
             ),
             SizedBox(height: 8),
             TextField(
               decoration: InputDecoration(labelText: 'Дата рождения'),
-              onChanged: (value) => client = client.copyWith(birthday: value),
+              onChanged: (value) => client.birthday= value,
             ),
             SizedBox(height: 8),
             TextField(
@@ -226,19 +236,18 @@ class _ClientDialogState extends State<ClientDialog> {
             SizedBox(height: 8),
             TextField(
               decoration: InputDecoration(labelText: 'Номер телефона'),
-              onChanged: (value) => client = client.copyWith(phone: value),
             ),
             SizedBox(height: 8),
             TextField(
               decoration: InputDecoration(labelText: 'Email'),
-              onChanged: (value) => client = client.copyWith(email: value),
+              onChanged: (value) => client.email= value,
             ),
             TextField(
               decoration: InputDecoration(
                 labelText: 'название предприятия(для ЮЛ)',
               ),
               onChanged: (value) =>
-                  client = client.copyWith(innEnterprise: value),
+                  client.innEnterprise = value,
             ),
           ],
         ),
@@ -265,15 +274,19 @@ class _LabPageState extends State<LabPage> {
   final TextEditingController _controller = TextEditingController();
   final TextEditingController _numbercase = TextEditingController();
 
-  @override
-  void initState() async {
-    final dio = Dio();
-    final response = await dio.post(
-      'http://localhost:8080/count',
-      data: jsonEncode(CountRequest().toJson()),
-    );
-    final countResponse = CountResponse.fromJson(response.data);
-    _numbercase.text = countResponse.count.toString();
+
+   @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final dio = Dio();
+      final response = await dio.get(
+        // на сервере get для /count, тут тоже должен быть get
+        'http://localhost:8080/count',
+        data: jsonEncode(CountRequest().toJson()),
+      );
+      final countResponse = CountResponse.fromJson(response.data);
+      _numbercase.text = countResponse.count.toString();
+    });
     super.initState();
   }
 
@@ -341,6 +354,17 @@ class _LabPageState extends State<LabPage> {
               decoration: InputDecoration(labelText: 'Введите код кейса'),
             ),
             TextField(controller: _numbercase),
+            Text('клиент'),
+            Row(
+              children: [
+                ElevatedButton(onPressed: () {},
+                 child: Text('выбор клиента')),
+                ElevatedButton(onPressed: () {
+                  pageAddClient(context);
+                },
+                 child: Text('добавление нового клиента')),
+              ],
+            )
           ],
         ),
       ),

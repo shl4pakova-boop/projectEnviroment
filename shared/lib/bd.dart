@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:drift/drift.dart';
 import 'package:drift_postgres/drift_postgres.dart';
 import 'package:postgres/postgres.dart' as pg;
+import 'package:shared/shared.dart';
 
 part 'bd.g.dart';
 
@@ -48,7 +49,7 @@ class Client extends Table {
   TextColumn get email => text()();
   TextColumn get phone => text()();
   TextColumn get innEnterprise =>
-      text().references(Enterprise, #inn, onDelete: KeyAction.cascade)();
+      text().nullable().references(Enterprise, #inn, onDelete: KeyAction.cascade)();
   @override
   Set<Column<Object>> get primaryKey => {login};
 }
@@ -98,7 +99,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1743492;
+  int get schemaVersion => 1743643492;
 
   static QueryExecutor _openConnection() {
     return PgDatabase(
@@ -125,7 +126,7 @@ class AppDatabase extends _$AppDatabase {
         .getSingleOrNull();
   }
 
-  void insertClient() async {
+  void insertData() async {
     await into(enterprise).insertOnConflictUpdate(
       EnterpriseCompanion.insert(
         inn: '123456789012',
@@ -142,7 +143,7 @@ class AppDatabase extends _$AppDatabase {
         birthday: '1990-01-01',
         email: 'johndoe@example.com',
         phone: '+1234567890',
-        innEnterprise: '123456789012',
+        innEnterprise: Value('123456789012'),
       ),
     );
     into(client).insertOnConflictUpdate(
@@ -153,8 +154,13 @@ class AppDatabase extends _$AppDatabase {
         birthday: '1990-01-01',
         email: 'johndoe@example.com',
         phone: '+1234567890',
-        innEnterprise: '123456789012',
+        innEnterprise: Value('123456789012'),
       ),
+    );
+  }
+  void insertNewClient(OurClient c) async {
+    into(client).insertOnConflictUpdate(
+      ClientCompanion.insert( password:'000000000', name: c.name, login: c.login, birthday: c.birthday, email: c.email, phone: c.phone, innEnterprise: Value(c.innEnterprise))
     );
   }
 

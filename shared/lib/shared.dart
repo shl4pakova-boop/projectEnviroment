@@ -59,7 +59,7 @@ class OurClient {
   String birthday;
   String email;
   String phone;
-  String innEnterprise;
+  String nameEnterprise;
   OurClient({
     required this.password,
     required this.name,
@@ -67,7 +67,7 @@ class OurClient {
     required this.birthday,
     required this.email,
     required this.phone,
-    required this.innEnterprise,
+    required this.nameEnterprise,
   });
   factory OurClient.fromJson(Map<String, dynamic> json) =>
       _$OurClientFromJson(json);

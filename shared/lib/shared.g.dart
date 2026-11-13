@@ -61,7 +61,7 @@ OurClient _$OurClientFromJson(Map<String, dynamic> json) => OurClient(
   birthday: json['birthday'] as String,
   email: json['email'] as String,
   phone: json['phone'] as String,
-  innEnterprise: json['innEnterprise'] as String,
+  nameEnterprise: json['nameEnterprise'] as String,
 );
 
 Map<String, dynamic> _$OurClientToJson(OurClient instance) => <String, dynamic>{
@@ -71,5 +71,5 @@ Map<String, dynamic> _$OurClientToJson(OurClient instance) => <String, dynamic>{
   'birthday': instance.birthday,
   'email': instance.email,
   'phone': instance.phone,
-  'innEnterprise': instance.innEnterprise,
+  'nameEnterprise': instance.nameEnterprise,
 };

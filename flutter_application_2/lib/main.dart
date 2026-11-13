@@ -208,7 +208,7 @@ class _ClientDialogState extends State<ClientDialog> {
     birthday: '',
     email: '',
     phone: '',
-    innEnterprise: '',
+    nameEnterprise: '',
   );
   @override
   Widget build(BuildContext context) {
@@ -247,7 +247,7 @@ class _ClientDialogState extends State<ClientDialog> {
                 labelText: 'название предприятия(для ЮЛ)',
               ),
               onChanged: (value) =>
-                  client.innEnterprise = value,
+                  client.nameEnterprise = value,
             ),
           ],
         ),

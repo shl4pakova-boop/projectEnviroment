@@ -33,12 +33,13 @@ class Service extends Table {
 }
 
 class Enterprise extends Table {
-  TextColumn get inn => text().withLength(min: 10, max: 12)();
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get inn => text().withLength(min: 10, max: 12).nullable()();
   TextColumn get name => text()();
-  TextColumn get address => text()();
-  TextColumn get bic => text().withLength(min: 9, max: 9)();
+  TextColumn get address => text().nullable()();
+  TextColumn get bic => text().withLength(min: 9, max: 9).nullable()();
   @override
-  Set<Column<Object>> get primaryKey => {inn};
+  Set<Column<Object>> get primaryKey => {id};
 }
 
 class Client extends Table {
@@ -99,7 +100,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1743643492;
+  int get schemaVersion => 1742;
 
   static QueryExecutor _openConnection() {
     return PgDatabase(
@@ -129,13 +130,13 @@ class AppDatabase extends _$AppDatabase {
   void insertData() async {
     await into(enterprise).insertOnConflictUpdate(
       EnterpriseCompanion.insert(
-        inn: '123456789012',
+        inn: Value('123456789012'),
         name: 'fdf',
-        address: 'dffd',
-        bic: '123456789',
+        address: Value('dffd'),
+        bic: Value('123456789'),
       ),
     );
-    into(client).insertOnConflictUpdate(
+   await  into(client).insertOnConflictUpdate(
       ClientCompanion.insert(
         password: '11111111',
         name: 'John',
@@ -146,7 +147,7 @@ class AppDatabase extends _$AppDatabase {
         innEnterprise: Value('123456789012'),
       ),
     );
-    into(client).insertOnConflictUpdate(
+    await into(client).insertOnConflictUpdate(
       ClientCompanion.insert(
         password: '11111111',
         name: 'Mary',
@@ -160,8 +161,9 @@ class AppDatabase extends _$AppDatabase {
   }
   void insertNewClient(OurClient c) async {
     into(client).insertOnConflictUpdate(
-      ClientCompanion.insert( password:'000000000', name: c.name, login: c.login, birthday: c.birthday, email: c.email, phone: c.phone, innEnterprise: Value(c.innEnterprise))
-    );
+      ClientCompanion.insert( password:'000000000', name: c.name, login: c.login, birthday: c.birthday, email: c.email, phone: c.phone));
+    into(enterprise).insertOnConflictUpdate(
+      EnterpriseCompanion.insert( name: c.nameEnterprise));
   }
 
   Future<ClientData?> findClient(String login, String password) {
@@ -187,6 +189,7 @@ class AppDatabase extends _$AppDatabase {
         for (final table in allTables) {
           await m.deleteTable(table.actualTableName);
           await m.createTable(table);
+            
         }
 
         log('Migration ended');

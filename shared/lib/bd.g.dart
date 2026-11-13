@@ -625,18 +625,31 @@ class $EnterpriseTable extends Enterprise
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $EnterpriseTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
   static const VerificationMeta _innMeta = const VerificationMeta('inn');
   @override
   late final GeneratedColumn<String> inn = GeneratedColumn<String>(
     'inn',
     aliasedName,
-    false,
+    true,
     additionalChecks: GeneratedColumn.checkTextLength(
       minTextLength: 10,
       maxTextLength: 12,
     ),
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
@@ -654,25 +667,25 @@ class $EnterpriseTable extends Enterprise
   late final GeneratedColumn<String> address = GeneratedColumn<String>(
     'address',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _bicMeta = const VerificationMeta('bic');
   @override
   late final GeneratedColumn<String> bic = GeneratedColumn<String>(
     'bic',
     aliasedName,
-    false,
+    true,
     additionalChecks: GeneratedColumn.checkTextLength(
       minTextLength: 9,
       maxTextLength: 9,
     ),
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   @override
-  List<GeneratedColumn> get $columns => [inn, name, address, bic];
+  List<GeneratedColumn> get $columns => [id, inn, name, address, bic];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -685,13 +698,14 @@ class $EnterpriseTable extends Enterprise
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
     if (data.containsKey('inn')) {
       context.handle(
         _innMeta,
         inn.isAcceptableOrUnknown(data['inn']!, _innMeta),
       );
-    } else if (isInserting) {
-      context.missing(_innMeta);
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -706,30 +720,30 @@ class $EnterpriseTable extends Enterprise
         _addressMeta,
         address.isAcceptableOrUnknown(data['address']!, _addressMeta),
       );
-    } else if (isInserting) {
-      context.missing(_addressMeta);
     }
     if (data.containsKey('bic')) {
       context.handle(
         _bicMeta,
         bic.isAcceptableOrUnknown(data['bic']!, _bicMeta),
       );
-    } else if (isInserting) {
-      context.missing(_bicMeta);
     }
     return context;
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {inn};
+  Set<GeneratedColumn> get $primaryKey => {id};
   @override
   EnterpriseData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return EnterpriseData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
       inn: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}inn'],
-      )!,
+      ),
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}name'],
@@ -737,11 +751,11 @@ class $EnterpriseTable extends Enterprise
       address: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}address'],
-      )!,
+      ),
       bic: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}bic'],
-      )!,
+      ),
     );
   }
 
@@ -752,32 +766,44 @@ class $EnterpriseTable extends Enterprise
 }
 
 class EnterpriseData extends DataClass implements Insertable<EnterpriseData> {
-  final String inn;
+  final int id;
+  final String? inn;
   final String name;
-  final String address;
-  final String bic;
+  final String? address;
+  final String? bic;
   const EnterpriseData({
-    required this.inn,
+    required this.id,
+    this.inn,
     required this.name,
-    required this.address,
-    required this.bic,
+    this.address,
+    this.bic,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['inn'] = Variable<String>(inn);
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || inn != null) {
+      map['inn'] = Variable<String>(inn);
+    }
     map['name'] = Variable<String>(name);
-    map['address'] = Variable<String>(address);
-    map['bic'] = Variable<String>(bic);
+    if (!nullToAbsent || address != null) {
+      map['address'] = Variable<String>(address);
+    }
+    if (!nullToAbsent || bic != null) {
+      map['bic'] = Variable<String>(bic);
+    }
     return map;
   }
 
   EnterpriseCompanion toCompanion(bool nullToAbsent) {
     return EnterpriseCompanion(
-      inn: Value(inn),
+      id: Value(id),
+      inn: inn == null && nullToAbsent ? const Value.absent() : Value(inn),
       name: Value(name),
-      address: Value(address),
-      bic: Value(bic),
+      address: address == null && nullToAbsent
+          ? const Value.absent()
+          : Value(address),
+      bic: bic == null && nullToAbsent ? const Value.absent() : Value(bic),
     );
   }
 
@@ -787,36 +813,41 @@ class EnterpriseData extends DataClass implements Insertable<EnterpriseData> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return EnterpriseData(
-      inn: serializer.fromJson<String>(json['inn']),
+      id: serializer.fromJson<int>(json['id']),
+      inn: serializer.fromJson<String?>(json['inn']),
       name: serializer.fromJson<String>(json['name']),
-      address: serializer.fromJson<String>(json['address']),
-      bic: serializer.fromJson<String>(json['bic']),
+      address: serializer.fromJson<String?>(json['address']),
+      bic: serializer.fromJson<String?>(json['bic']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'inn': serializer.toJson<String>(inn),
+      'id': serializer.toJson<int>(id),
+      'inn': serializer.toJson<String?>(inn),
       'name': serializer.toJson<String>(name),
-      'address': serializer.toJson<String>(address),
-      'bic': serializer.toJson<String>(bic),
+      'address': serializer.toJson<String?>(address),
+      'bic': serializer.toJson<String?>(bic),
     };
   }
 
   EnterpriseData copyWith({
-    String? inn,
+    int? id,
+    Value<String?> inn = const Value.absent(),
     String? name,
-    String? address,
-    String? bic,
+    Value<String?> address = const Value.absent(),
+    Value<String?> bic = const Value.absent(),
   }) => EnterpriseData(
-    inn: inn ?? this.inn,
+    id: id ?? this.id,
+    inn: inn.present ? inn.value : this.inn,
     name: name ?? this.name,
-    address: address ?? this.address,
-    bic: bic ?? this.bic,
+    address: address.present ? address.value : this.address,
+    bic: bic.present ? bic.value : this.bic,
   );
   EnterpriseData copyWithCompanion(EnterpriseCompanion data) {
     return EnterpriseData(
+      id: data.id.present ? data.id.value : this.id,
       inn: data.inn.present ? data.inn.value : this.inn,
       name: data.name.present ? data.name.value : this.name,
       address: data.address.present ? data.address.value : this.address,
@@ -827,6 +858,7 @@ class EnterpriseData extends DataClass implements Insertable<EnterpriseData> {
   @override
   String toString() {
     return (StringBuffer('EnterpriseData(')
+          ..write('id: $id, ')
           ..write('inn: $inn, ')
           ..write('name: $name, ')
           ..write('address: $address, ')
@@ -836,11 +868,12 @@ class EnterpriseData extends DataClass implements Insertable<EnterpriseData> {
   }
 
   @override
-  int get hashCode => Object.hash(inn, name, address, bic);
+  int get hashCode => Object.hash(id, inn, name, address, bic);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is EnterpriseData &&
+          other.id == this.id &&
           other.inn == this.inn &&
           other.name == this.name &&
           other.address == this.address &&
@@ -848,63 +881,63 @@ class EnterpriseData extends DataClass implements Insertable<EnterpriseData> {
 }
 
 class EnterpriseCompanion extends UpdateCompanion<EnterpriseData> {
-  final Value<String> inn;
+  final Value<int> id;
+  final Value<String?> inn;
   final Value<String> name;
-  final Value<String> address;
-  final Value<String> bic;
-  final Value<int> rowid;
+  final Value<String?> address;
+  final Value<String?> bic;
   const EnterpriseCompanion({
+    this.id = const Value.absent(),
     this.inn = const Value.absent(),
     this.name = const Value.absent(),
     this.address = const Value.absent(),
     this.bic = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   EnterpriseCompanion.insert({
-    required String inn,
+    this.id = const Value.absent(),
+    this.inn = const Value.absent(),
     required String name,
-    required String address,
-    required String bic,
-    this.rowid = const Value.absent(),
-  }) : inn = Value(inn),
-       name = Value(name),
-       address = Value(address),
-       bic = Value(bic);
+    this.address = const Value.absent(),
+    this.bic = const Value.absent(),
+  }) : name = Value(name);
   static Insertable<EnterpriseData> custom({
+    Expression<int>? id,
     Expression<String>? inn,
     Expression<String>? name,
     Expression<String>? address,
     Expression<String>? bic,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
+      if (id != null) 'id': id,
       if (inn != null) 'inn': inn,
       if (name != null) 'name': name,
       if (address != null) 'address': address,
       if (bic != null) 'bic': bic,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   EnterpriseCompanion copyWith({
-    Value<String>? inn,
+    Value<int>? id,
+    Value<String?>? inn,
     Value<String>? name,
-    Value<String>? address,
-    Value<String>? bic,
-    Value<int>? rowid,
+    Value<String?>? address,
+    Value<String?>? bic,
   }) {
     return EnterpriseCompanion(
+      id: id ?? this.id,
       inn: inn ?? this.inn,
       name: name ?? this.name,
       address: address ?? this.address,
       bic: bic ?? this.bic,
-      rowid: rowid ?? this.rowid,
     );
   }
 
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
     if (inn.present) {
       map['inn'] = Variable<String>(inn.value);
     }
@@ -917,20 +950,17 @@ class EnterpriseCompanion extends UpdateCompanion<EnterpriseData> {
     if (bic.present) {
       map['bic'] = Variable<String>(bic.value);
     }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
     return map;
   }
 
   @override
   String toString() {
     return (StringBuffer('EnterpriseCompanion(')
+          ..write('id: $id, ')
           ..write('inn: $inn, ')
           ..write('name: $name, ')
           ..write('address: $address, ')
-          ..write('bic: $bic, ')
-          ..write('rowid: $rowid')
+          ..write('bic: $bic')
           ..write(')'))
         .toString();
   }
@@ -3154,18 +3184,18 @@ typedef $$ServiceTableProcessedTableManager =
       PrefetchHooks Function({bool employeeServiceRefs})
     >;
 typedef $$EnterpriseTableCreateCompanionBuilder = EnterpriseCompanion Function({
-  required String inn,
+  Value<int> id,
+  Value<String?> inn,
   required String name,
-  required String address,
-  required String bic,
-  Value<int> rowid,
+  Value<String?> address,
+  Value<String?> bic,
 });
 typedef $$EnterpriseTableUpdateCompanionBuilder = EnterpriseCompanion Function({
-  Value<String> inn,
+  Value<int> id,
+  Value<String?> inn,
   Value<String> name,
-  Value<String> address,
-  Value<String> bic,
-  Value<int> rowid,
+  Value<String?> address,
+  Value<String?> bic,
 });
 
 final class $$EnterpriseTableReferences
@@ -3180,9 +3210,10 @@ final class $$EnterpriseTableReferences
   );
 
   $$ClientTableProcessedTableManager get clientRefs {
-    final manager = $$ClientTableTableManager($_db, $_db.client).filter(
-      (f) => f.innEnterprise.inn.sqlEquals($_itemColumn<String>('inn')!),
-    );
+    final manager = $$ClientTableTableManager(
+      $_db,
+      $_db.client,
+    ).filter((f) => f.innEnterprise.inn.sqlEquals($_itemColumn<String>('inn')));
 
     final cache = $_typedResult.readTableOrNull(_clientRefsTable($_db));
     return ProcessedTableManager(
@@ -3200,6 +3231,11 @@ class $$EnterpriseTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get inn => $composableBuilder(
     column: $table.inn,
     builder: (column) => ColumnFilters(column),
@@ -3255,6 +3291,11 @@ class $$EnterpriseTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get inn => $composableBuilder(
     column: $table.inn,
     builder: (column) => ColumnOrderings(column),
@@ -3285,6 +3326,9 @@ class $$EnterpriseTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
   GeneratedColumn<String> get inn =>
       $composableBuilder(column: $table.inn, builder: (column) => column);
 
@@ -3351,31 +3395,31 @@ class $$EnterpriseTableTableManager
               $$EnterpriseTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> inn = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<String?> inn = const Value.absent(),
                 Value<String> name = const Value.absent(),
-                Value<String> address = const Value.absent(),
-                Value<String> bic = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
+                Value<String?> address = const Value.absent(),
+                Value<String?> bic = const Value.absent(),
               }) => EnterpriseCompanion(
+                id: id,
                 inn: inn,
                 name: name,
                 address: address,
                 bic: bic,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required String inn,
+                Value<int> id = const Value.absent(),
+                Value<String?> inn = const Value.absent(),
                 required String name,
-                required String address,
-                required String bic,
-                Value<int> rowid = const Value.absent(),
+                Value<String?> address = const Value.absent(),
+                Value<String?> bic = const Value.absent(),
               }) => EnterpriseCompanion.insert(
+                id: id,
                 inn: inn,
                 name: name,
                 address: address,
                 bic: bic,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(

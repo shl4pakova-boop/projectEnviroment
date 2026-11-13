@@ -56,10 +56,9 @@ void main() async {
     router.post('/client', (Request request) async {
         var body = await request.readAsString();
         final createUserReguest = CreateUserRequest.fromJson(jsonDecode(body));
-        log('${createUserReguest.clientData.email} ${createUserReguest.clientData.innEnterprise}');
+        log('${createUserReguest.clientData.email} ${createUserReguest.clientData.nameEnterprise}');
          database.insertNewClient(
         createUserReguest.clientData,
-
       );
 
       return Response.ok(jsonEncode(CreateUserResponse().toJson()),
